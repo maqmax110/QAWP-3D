@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>QAWP – delay by CAV penetration and queue weight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ffffff;--surface:#f4f6f8;--text:#1d2329;--muted:#5d6873;--line:#d9dee3;--accent:#1f5f99;--accent-text:#ffffff;--plane:#7a7f85;
+  color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181c;--surface:#1d2329;--text:#e6eaee;--muted:#9aa5b0;--line:#2f3740;--accent:#6aa7e0;--accent-text:#0e1215;--plane:#b6bcc2;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14181c;--surface:#1d2329;--text:#e6eaee;--muted:#9aa5b0;--line:#2f3740;--accent:#6aa7e0;--accent-text:#0e1215;--plane:#b6bcc2;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+main{max-width:980px;margin:0 auto;padding:28px 20px 40px}
+h1{font-size:1.55rem;font-weight:600;line-height:1.25;margin:0 0 6px;max-width:30ch}
+.sub{color:var(--muted);margin:0 0 18px;max-width:72ch;font-size:.95rem}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:0 0 10px}
+.hint{color:var(--muted);font-size:.9rem}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:.9rem;padding:7px 14px;border:0;background:var(--surface);color:var(--text);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-text)}
+#plot{width:100%;height:min(72vh,640px);min-height:420px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.notes{margin-top:18px;font-size:.88rem;color:var(--muted);max-width:76ch}
+.notes p{margin:0 0 8px}
+.err{padding:16px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>Vehicle and pedestrian delay by CAV penetration and queue weight</h1>
+  <p class="sub">Interactive companion to the summary figure of the master’s thesis “Queue-Aware Delay Balancing at Automated Intersections under Mixed Traffic”, Technical University of Munich, 2026.</p>
+  <div class="bar">
+    <span class="hint">Drag to rotate, scroll or pinch to zoom, hover for values.</span>
+    <div class="seg" role="group" aria-label="Road user">
+      <button id="bVeh" aria-pressed="true">Vehicles</button><button id="bPed" aria-pressed="false">Pedestrians</button>
+    </div>
+  </div>
+  <div id="plot" aria-label="3D surface of average delay against CAV penetration and queue weight"></div>
+  <div class="notes">
+    <p>The coloured surface shows the average delay of QAWP when its traffic state comes only from what connected automated vehicles can perceive (V2X reports and on-board ray casting with occlusion). The grey plane is the fixed-time design programme on the same traffic. Black points mark the best queue weight at each penetration rate.</p>
+    <p>Demand 2500 veh/h, 300 pedestrians/h. Each point is the mean of five simulation runs in SUMO; the waiting-time weight is w₂ = 1 − w₁. Penetration rates are plotted to scale (5, 10, 20, 30, 50 and 80 %).</p>
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.27.0/plotly.min.js"></script>
+<script>
+const D = {"pen": [5, 10, 20, 30, 50, 80], "w1": [0.0, 0.25, 0.5, 0.75, 1.0], "veh": [[19.14, 18.24, 17.98, 17.46, 16.87], [16.74, 15.85, 14.84, 14.4, 15.84], [15.84, 15.85, 14.58, 14.07, 13.76], [15.41, 15.11, 14.42, 14.02, 13.35], [17.95, 15.21, 13.22, 13.67, 13.73], [14.9, 14.41, 14.07, 13.57, 13.31]], "ped": [[14.88, 13.7, 14.39, 12.19, 13.13], [12.69, 11.57, 11.66, 10.02, 12.58], [12.94, 13.26, 10.94, 11.13, 10.76], [12.29, 11.7, 10.47, 10.55, 10.63], [14.99, 12.92, 10.32, 11.11, 11.4], [11.95, 11.94, 11.63, 10.46, 10.23]], "fixed_veh": 22.62, "fixed_ped": 16.43};
+const cfg = {veh:{z:D.veh, fixed:D.fixed_veh, label:"Average vehicle delay (s)"},
+             ped:{z:D.ped, fixed:D.fixed_ped, label:"Average pedestrian delay (s)"}};
+let mode = "veh";
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function traces(){
+  const c = cfg[mode];
+  const zmin = Math.min(...c.z.flat()), zmax = Math.max(c.fixed, ...c.z.flat());
+  const hov = "Penetration %{y} %<br>w₁ = %{x}<br>Delay %{z:.1f} s<extra></extra>";
+  const surf = {type:"surface", x:D.w1, y:D.pen, z:c.z, colorscale:"RdYlGn", reversescale:true, cmin:zmin, cmax:zmax,
+    colorbar:{title:{text:c.label, side:"right"}, thickness:14, len:0.7, tickfont:{color:css("--text")}, titlefont:{color:css("--text")}},
+    contours:{x:{show:true, color:"rgba(0,0,0,0.25)", width:1}, y:{show:true, color:"rgba(0,0,0,0.25)", width:1}},
+    hovertemplate:hov, name:"QAWP"};
+  const plane = {type:"surface", x:D.w1, y:D.pen, z:D.pen.map(()=>D.w1.map(()=>c.fixed)), showscale:false,
+    colorscale:[[0,css("--plane")],[1,css("--plane")]], opacity:0.35,
+    hovertemplate:"Fixed-time design programme<br>%{z:.1f} s<extra></extra>", name:"Fixed-time"};
+  const bx=[],by=[],bz=[];
+  c.z.forEach((row,i)=>{ let j=row.indexOf(Math.min(...row)); bx.push(D.w1[j]); by.push(D.pen[i]); bz.push(row[j]); });
+  const best = {type:"scatter3d", mode:"markers", x:bx, y:by, z:bz, marker:{size:5, color:css("--text")},
+    hovertemplate:"Best weight at %{y} %:<br>w₁ = %{x}, %{z:.1f} s<extra></extra>", name:"Best weight"};
+  return [surf, plane, best];
+}
+function layout(){
+  const ax = t => ({title:{text:t}, color:css("--text"), gridcolor:css("--line"), zerolinecolor:css("--line"), backgroundcolor:css("--bg"), showbackground:true});
+  return {paper_bgcolor:css("--bg"), font:{family:"IBM Plex Sans, Helvetica, Arial, sans-serif", color:css("--text"), size:12},
+    margin:{l:0,r:0,t:10,b:0}, showlegend:false,
+    scene:{xaxis:{...ax("w₁ (weight of queue length)"), tickvals:D.w1},
+           yaxis:{...ax("CAV penetration (%)"), tickvals:D.pen},
+           zaxis:ax(cfg[mode].label), camera:{eye:{x:-1.55,y:-1.55,z:0.85}}, aspectmode:"manual", aspectratio:{x:1,y:1.2,z:0.7}}};
+}
+function draw(){ Plotly.react("plot", traces(), layout(), {responsive:true, displaylogo:false}); }
+function setMode(m){ mode=m; document.getElementById("bVeh").setAttribute("aria-pressed", m==="veh"); document.getElementById("bPed").setAttribute("aria-pressed", m==="ped"); draw(); }
+if (window.Plotly){
+  draw();
+  document.getElementById("bVeh").onclick=()=>setMode("veh");
+  document.getElementById("bPed").onclick=()=>setMode("ped");
+  const mq = window.matchMedia("(prefers-color-scheme: dark)"); if (mq.addEventListener) mq.addEventListener("change", draw);
+  new MutationObserver(draw).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+} else {
+  document.getElementById("plot").innerHTML='<p class="err">The 3D viewer could not load. Please reload the page.</p>';
+}
+</script>
+</body>
+</html>
