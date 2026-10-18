@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>QAWP against fixed-time control from free flow to beyond capacity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ffffff;--surface:#f4f6f8;--text:#1d2329;--muted:#5d6873;--line:#d9dee3;--accent:#1f5f99;--accent-text:#ffffff;--card:#f7f9fb;
+  color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181c;--surface:#1d2329;--text:#e6eaee;--muted:#9aa5b0;--line:#2f3740;--accent:#6aa7e0;--accent-text:#0e1215;--card:#192026;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14181c;--surface:#1d2329;--text:#e6eaee;--muted:#9aa5b0;--line:#2f3740;--accent:#6aa7e0;--accent-text:#0e1215;--card:#192026;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+main{max-width:1080px;margin:0 auto;padding:22px 20px 44px}
+nav.top{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:.86rem;margin:0 0 18px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+nav.top a{color:var(--muted);text-decoration:none} nav.top a:hover{color:var(--text)} nav.top a.cur{color:var(--accent);font-weight:600}
+nav.top .home{color:var(--text);font-weight:600;margin-right:8px}
+.tag{display:inline-block;font-size:.75rem;font-weight:600;letter-spacing:.03em;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:1px 9px;margin-bottom:6px}
+h1{font-size:1.5rem;font-weight:600;line-height:1.25;margin:0 0 6px;max-width:40ch}
+h2{font-size:1.02rem;font-weight:600;margin:20px 0 8px}
+.sub{color:var(--muted);margin:0 0 16px;max-width:72ch;font-size:.95rem}
+.ctl{display:flex;flex-direction:column;gap:10px;margin:0 0 12px}
+.grp{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.grp>span{font-size:.82rem;color:var(--muted);min-width:11.5em}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;padding:6px 11px;border:0;background:var(--surface);color:var(--text);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-text)}
+.checks{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.88rem}
+.checks label{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px}
+.plot{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.notes{margin-top:18px;font-size:.87rem;color:var(--muted);max-width:78ch} .notes p{margin:0 0 8px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin-top:8px}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 16px 14px;color:var(--text);text-decoration:none}
+.card:hover{border-color:var(--accent)} .card h3{margin:2px 0 6px;font-size:1rem;line-height:1.3} .card p{margin:0;color:var(--muted);font-size:.88rem}
+.err{padding:16px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+<nav class="top"><a class="home" href="index.html">QAWP results</a><a href="penetration-3d.html">Penetration &amp; demand (3D)</a><a href="demand-sweep.html" class="cur">Demand sweep</a><a href="timing.html">Signal timing</a><a href="weights-3d.html">Queue weight (3D)</a><a href="tradeoff.html">Efficiency vs fairness</a><a href="vru-weight.html">VRU weighting</a><a href="observability.html">Observability</a><a href="perception-cost.html">Cost of perception</a></nav>
+<span class="tag">Main question</span>
+<h1>QAWP against fixed-time control from free flow to beyond capacity</h1>
+<p class="sub">Delay, fairness, throughput and switching of QAWP and both fixed-time baselines for 1000–4000 veh/h.</p>
+<div class="ctl" id="ctl"></div>
+<div class="plot" id="p1" style="height:560px"></div>
+<div class="notes"><p>Mean of three simulation runs per point; 50 % CAVs, 300 pedestrians/h, minimum green 10 s, w₁ = w₂ = 0.5. The dashed line marks the capacity of about 3500 veh/h.</p><p>The design programme changes phase 160 times per hour by construction (four green phases in a 90 s cycle). Above capacity, delay values are biased low because vehicles that never enter the network add no delay.</p><p>Use the camera icon at the top right of a chart to save it as an image.</p></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.27.0/plotly.min.js"></script>
+<script>
+const PAGE = {"file": "demand-sweep.html", "selectors": [{"id": "meas", "label": "Measure", "options": [["avg_veh_delay", "Average vehicle delay (s)"], ["avg_ped_delay", "Average pedestrian delay (s)"], ["max_ped", "Maximum pedestrian delay (s)"], ["max_veh", "Maximum vehicle delay (s)"], ["jfi", "Jain\u2019s fairness index"], ["phase_switches", "Phase changes per hour"], ["throughput", "Throughput (veh/h)"], ["unserved", "Unserved demand (%)"]]}], "plots": [{"id": "p1", "uses": ["meas"], "h": 560}]};
+const DATA = {"p1|avg_veh_delay": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "QAWP", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [9.727, 10.683, 11.9, 14.047, 19.39, 27.3, 36.907, 41.053, 43.923], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "QAWP<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Alternating fixed-time", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [16.777, 16.75, 17.763, 21.723, 35.193, 43.443, 44.047, 45.577, 46.59], "line": {"color": "#E69F00", "width": 2.4, "dash": "dash"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "Alternating fixed-time<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Design programme", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [21.99, 21.253, 21.267, 23.19, 26.523, 29.6, 39.423, 44.07, 46.213], "line": {"color": "#009E73", "width": 2.4, "dash": "dot"}, "marker": {"size": 7, "color": "#009E73"}, "hovertemplate": "Design programme<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Total vehicle demand (veh/h)", "y": "Average vehicle delay (s)", "vline": 3500}}, "p1|avg_ped_delay": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "QAWP", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [8.803, 10.04, 11.13, 12.4, 12.283, 14.433, 13.093, 13.81, 15.8], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "QAWP<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Alternating fixed-time", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [13.85, 13.99, 13.837, 13.643, 14.517, 14.187, 14.76, 14.817, 15.247], "line": {"color": "#E69F00", "width": 2.4, "dash": "dash"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "Alternating fixed-time<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Design programme", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [16.023, 16.09, 16.163, 15.99, 16.137, 16.017, 16.09, 16.06, 15.977], "line": {"color": "#009E73", "width": 2.4, "dash": "dot"}, "marker": {"size": 7, "color": "#009E73"}, "hovertemplate": "Design programme<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Total vehicle demand (veh/h)", "y": "Average pedestrian delay (s)", "vline": 3500}}, "p1|max_ped": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "QAWP", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [31.667, 33.0, 41.0, 55.333, 38.0, 54.667, 57.667, 43.0, 71.667], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "QAWP<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Alternating fixed-time", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [41.0, 41.667, 39.667, 41.333, 55.333, 44.0, 53.0, 52.0, 60.0], "line": {"color": "#E69F00", "width": 2.4, "dash": "dash"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "Alternating fixed-time<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Design programme", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [46.0, 46.333, 46.667, 46.667, 45.667, 45.0, 46.0, 46.667, 45.667], "line": {"color": "#009E73", "width": 2.4, "dash": "dot"}, "marker": {"size": 7, "color": "#009E73"}, "hovertemplate": "Design programme<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Total vehicle demand (veh/h)", "y": "Maximum pedestrian delay (s)", "vline": 3500}}, "p1|max_veh": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "QAWP", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [35.667, 38.667, 53.0, 67.333, 75.0, 83.333, 86.0, 91.0, 89.0], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "QAWP<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Alternating fixed-time", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [44.667, 76.667, 76.0, 83.667, 91.667, 93.667, 93.0, 94.0, 93.0], "line": {"color": "#E69F00", "width": 2.4, "dash": "dash"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "Alternating fixed-time<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Design programme", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [58.0, 61.0, 63.667, 79.667, 83.0, 86.667, 88.333, 88.667, 88.667], "line": {"color": "#009E73", "width": 2.4, "dash": "dot"}, "marker": {"size": 7, "color": "#009E73"}, "hovertemplate": "Design programme<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Total vehicle demand (veh/h)", "y": "Maximum vehicle delay (s)", "vline": 3500}}, "p1|jfi": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "QAWP", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [0.668, 0.669, 0.655, 0.639, 0.652, 0.675, 0.761, 0.811, 0.838], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "QAWP<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Alternating fixed-time", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [0.684, 0.664, 0.656, 0.623, 0.704, 0.792, 0.799, 0.808, 0.811], "line": {"color": "#E69F00", "width": 2.4, "dash": "dash"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "Alternating fixed-time<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Design programme", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [0.676, 0.667, 0.668, 0.664, 0.673, 0.686, 0.759, 0.814, 0.832], "line": {"color": "#009E73", "width": 2.4, "dash": "dot"}, "marker": {"size": 7, "color": "#009E73"}, "hovertemplate": "Design programme<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Total vehicle demand (veh/h)", "y": "Jain\u2019s fairness index", "vline": 3500}}, "p1|phase_switches": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "QAWP", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [202.333, 211.667, 217.0, 220.667, 225.667, 229.667, 223.667, 205.333, 195.0], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "QAWP<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Alternating fixed-time", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [94.0, 94.0, 94.0, 94.0, 94.0, 94.0, 94.0, 94.0, 94.0], "line": {"color": "#E69F00", "width": 2.4, "dash": "dash"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "Alternating fixed-time<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Design programme", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [160.0, 160.0, 160.0, 160.0, 160.0, 160.0, 160.0, 160.0, 160.0], "line": {"color": "#009E73", "width": 2.4, "dash": "dot"}, "marker": {"size": 7, "color": "#009E73"}, "hovertemplate": "Design programme<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Total vehicle demand (veh/h)", "y": "Phase changes per hour", "vline": 3500}}, "p1|throughput": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "QAWP", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [1258.7, 1751.3, 2243.3, 2731.3, 3214.3, 3428.7, 3522.7, 3470.0, 3247.0], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "QAWP<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Alternating fixed-time", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [1255.3, 1746.7, 2240.3, 2723.0, 3167.7, 3250.7, 3307.3, 3347.3, 3272.7], "line": {"color": "#E69F00", "width": 2.4, "dash": "dash"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "Alternating fixed-time<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Design programme", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [1254.7, 1741.3, 2233.3, 2720.0, 3202.3, 3425.7, 3548.3, 3591.0, 3460.0], "line": {"color": "#009E73", "width": 2.4, "dash": "dot"}, "marker": {"size": 7, "color": "#009E73"}, "hovertemplate": "Design programme<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Total vehicle demand (veh/h)", "y": "Throughput (veh/h)", "vline": 3500}}, "p1|unserved": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "QAWP", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.75, 3.57, 8.81], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "QAWP<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Alternating fixed-time", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [0.0, 0.0, 0.0, 0.0, 0.01, 1.48, 3.66, 5.99, 9.47], "line": {"color": "#E69F00", "width": 2.4, "dash": "dash"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "Alternating fixed-time<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Design programme", "x": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "y": [0.0, 0.0, 0.0, 0.01, 0.01, 0.0, 0.77, 2.4, 6.57], "line": {"color": "#009E73", "width": 2.4, "dash": "dot"}, "marker": {"size": 7, "color": "#009E73"}, "hovertemplate": "Design programme<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Total vehicle demand (veh/h)", "y": "Unserved demand (%)", "vline": 3500}}};
+
+const SEL = {}; PAGE.selectors.forEach(s => SEL[s.id] = s.options[0][0]);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const $ = id => document.getElementById(id);
+const names = []; const colors = {};
+Object.values(DATA).forEach(d => d.traces.forEach(t => { if (!names.includes(t.name)) { names.push(t.name);
+  colors[t.name] = t.line ? t.line.color : t.colorscale[0][1]; } }));
+const ON = {}; names.forEach(n => ON[n] = true);
+function controls() {
+  const c = $("ctl");
+  PAGE.selectors.forEach(s => {
+    const g = document.createElement("div"); g.className = "grp";
+    g.innerHTML = `<span>${s.label}</span>`; const seg = document.createElement("div"); seg.className = "seg"; seg.setAttribute("role", "group");
+    s.options.forEach(([v, l]) => { const b = document.createElement("button"); b.textContent = l; b.setAttribute("aria-pressed", v === SEL[s.id]);
+      b.onclick = () => { SEL[s.id] = v; [...seg.children].forEach(x => x.setAttribute("aria-pressed", x === b)); draw(); }; seg.appendChild(b); });
+    g.appendChild(seg); c.appendChild(g);
+  });
+  const g = document.createElement("div"); g.className = "grp"; g.innerHTML = "<span>Show</span>";
+  const ch = document.createElement("div"); ch.className = "checks";
+  names.forEach(n => { const l = document.createElement("label");
+    l.innerHTML = `<input type="checkbox" checked> <span class="sw" style="background:${colors[n]}"></span> ${n}`;
+    l.querySelector("input").onchange = e => { ON[n] = e.target.checked; draw(); }; ch.appendChild(l); });
+  g.appendChild(ch); c.appendChild(g);
+}
+function layout(L) {
+  const fg = css("--text"), gr = css("--line"), bg = css("--bg");
+  const base = { paper_bgcolor: bg, plot_bgcolor: bg, font: { family: "IBM Plex Sans, Helvetica, Arial, sans-serif", color: fg, size: 12 },
+                 showlegend: false, margin: { l: 64, r: 18, t: 14, b: 56 }, hoverlabel: { font: { family: "IBM Plex Sans, Helvetica, Arial, sans-serif" } } };
+  if (L.three) {
+    const ax = (t, tv) => ({ title: { text: t }, color: fg, gridcolor: gr, zerolinecolor: gr, backgroundcolor: bg, showbackground: true, ...(tv ? { tickvals: tv } : {}) });
+    return { ...base, margin: { l: 0, r: 0, t: 0, b: 0 }, scene: { xaxis: ax(L.x, L.xt), yaxis: ax(L.y, L.yt), zaxis: ax(L.z),
+             camera: { eye: { x: -1.55, y: -1.6, z: 0.85 } }, aspectmode: "manual", aspectratio: { x: 1.2, y: 1, z: 0.7 } } };
+  }
+  const shapes = [];
+  if (L.vline !== undefined) shapes.push({ type: "line", xref: "x", yref: "paper", x0: L.vline, x1: L.vline, y0: 0, y1: 1, line: { color: css("--muted"), dash: "dash", width: 1 } });
+  if (L.band !== undefined) shapes.push({ type: "rect", xref: "paper", yref: "y", x0: 0, x1: 1, y0: -L.band, y1: L.band, fillcolor: css("--line"), opacity: 0.45, line: { width: 0 }, layer: "below" });
+  return { ...base, shapes,
+    xaxis: { title: { text: L.x }, gridcolor: gr, zerolinecolor: gr, ...(L.xlog ? { type: "log" } : {}), ...(L.xticks ? { tickvals: L.xticks, ticktext: L.xticks.map(String) } : {}) },
+    yaxis: { title: { text: L.y }, gridcolor: gr, zerolinecolor: gr, ...(L.yrange ? { range: L.yrange } : {}) } };
+}
+const config = { responsive: true, displaylogo: false, toImageButtonOptions: { format: "png", scale: 3, filename: PAGE.file.replace(".html", "") } };
+function draw() {
+  PAGE.plots.forEach(p => {
+    const spec = DATA[p.id + "|" + p.uses.map(u => SEL[u]).join("|")];
+    const traces = spec.traces.map(t => ({ ...t, visible: ON[t.name] ? true : false }));
+    Plotly.react(p.id, traces, layout(spec.layout), config);
+  });
+}
+if (window.Plotly) {
+  controls(); draw();
+  const mq = window.matchMedia("(prefers-color-scheme: dark)"); if (mq.addEventListener) mq.addEventListener("change", draw);
+  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+} else { PAGE.plots.forEach(p => $(p.id).innerHTML = '<p class="err">The chart library could not load. Please check the internet connection and reload.</p>'); }
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minimum green time and decision interval</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ffffff;--surface:#f4f6f8;--text:#1d2329;--muted:#5d6873;--line:#d9dee3;--accent:#1f5f99;--accent-text:#ffffff;--card:#f7f9fb;
+  color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181c;--surface:#1d2329;--text:#e6eaee;--muted:#9aa5b0;--line:#2f3740;--accent:#6aa7e0;--accent-text:#0e1215;--card:#192026;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14181c;--surface:#1d2329;--text:#e6eaee;--muted:#9aa5b0;--line:#2f3740;--accent:#6aa7e0;--accent-text:#0e1215;--card:#192026;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+main{max-width:1080px;margin:0 auto;padding:22px 20px 44px}
+nav.top{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:.86rem;margin:0 0 18px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+nav.top a{color:var(--muted);text-decoration:none} nav.top a:hover{color:var(--text)} nav.top a.cur{color:var(--accent);font-weight:600}
+nav.top .home{color:var(--text);font-weight:600;margin-right:8px}
+.tag{display:inline-block;font-size:.75rem;font-weight:600;letter-spacing:.03em;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:1px 9px;margin-bottom:6px}
+h1{font-size:1.5rem;font-weight:600;line-height:1.25;margin:0 0 6px;max-width:40ch}
+h2{font-size:1.02rem;font-weight:600;margin:20px 0 8px}
+.sub{color:var(--muted);margin:0 0 16px;max-width:72ch;font-size:.95rem}
+.ctl{display:flex;flex-direction:column;gap:10px;margin:0 0 12px}
+.grp{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.grp>span{font-size:.82rem;color:var(--muted);min-width:11.5em}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:.85rem;padding:6px 11px;border:0;background:var(--surface);color:var(--text);cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-text)}
+.checks{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.88rem}
+.checks label{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px}
+.plot{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.notes{margin-top:18px;font-size:.87rem;color:var(--muted);max-width:78ch} .notes p{margin:0 0 8px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin-top:8px}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 16px 14px;color:var(--text);text-decoration:none}
+.card:hover{border-color:var(--accent)} .card h3{margin:2px 0 6px;font-size:1rem;line-height:1.3} .card p{margin:0;color:var(--muted);font-size:.88rem}
+.err{padding:16px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+<nav class="top"><a class="home" href="index.html">QAWP results</a><a href="penetration-3d.html">Penetration &amp; demand (3D)</a><a href="demand-sweep.html">Demand sweep</a><a href="timing.html" class="cur">Signal timing</a><a href="weights-3d.html">Queue weight (3D)</a><a href="tradeoff.html">Efficiency vs fairness</a><a href="vru-weight.html">VRU weighting</a><a href="observability.html">Observability</a><a href="perception-cost.html">Cost of perception</a></nav>
+<span class="tag">Timing parameters</span>
+<h1>Minimum green time and decision interval</h1>
+<p class="sub">Why the best minimum green rises near capacity, and why the decision interval has no measurable effect.</p>
+<div class="ctl" id="ctl"></div>
+<h2>Minimum green time</h2>
+<div class="plot" id="p1" style="height:470px"></div>
+<h2>Decision interval</h2>
+<div class="plot" id="p2" style="height:470px"></div>
+<div class="notes"><p>Mean of three runs (minimum green) and three to five runs (decision interval); 50 % CAVs, 300 pedestrians/h.</p><p>The tested decision intervals always divide the minimum green, so every setting makes its first decision at the same moment.</p><p>Use the camera icon at the top right of a chart to save it as an image.</p></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.27.0/plotly.min.js"></script>
+<script>
+const PAGE = {"file": "timing.html", "selectors": [{"id": "mgm", "label": "Minimum green: measure", "options": [["avg_veh_delay", "Average vehicle delay (s)"], ["avg_ped_delay", "Average pedestrian delay (s)"], ["phase_switches", "Phase changes per hour"], ["throughput", "Throughput (veh/h)"], ["max_ped", "Maximum pedestrian delay (s)"], ["jfi", "Jain\u2019s fairness index"]]}, {"id": "dtg", "label": "Decision interval: minimum green", "options": [["10", "10 s"], ["15", "15 s"], ["20", "20 s"]]}, {"id": "dtm", "label": "Decision interval: measure", "options": [["avg_veh_delay", "Vehicle delay"], ["phase_switches", "Phase changes"]]}], "plots": [{"id": "p1", "uses": ["mgm"], "h": 470, "title": "Minimum green time"}, {"id": "p2", "uses": ["dtg", "dtm"], "h": 470, "title": "Decision interval"}]};
+const DATA = {"p1|avg_veh_delay": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "1500 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [8.457, 10.683, 13.447, 15.117, 17.387, 18.72], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "1500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "2500 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [12.37, 14.047, 16.237, 19.39, 22.123, 24.84], "line": {"color": "#E69F00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "2500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "3250 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [33.79, 27.3, 25.46, 27.997, 30.51, 33.4], "line": {"color": "#D55E00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#D55E00"}, "hovertemplate": "3250 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Minimum green time (s)", "y": "Average vehicle delay (s)"}}, "p1|avg_ped_delay": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "1500 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [7.56, 10.04, 11.84, 12.917, 15.727, 16.013], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "1500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "2500 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [9.277, 12.4, 14.01, 15.913, 18.25, 20.203], "line": {"color": "#E69F00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "2500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "3250 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [10.373, 14.433, 16.66, 17.137, 22.54, 25.44], "line": {"color": "#D55E00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#D55E00"}, "hovertemplate": "3250 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Minimum green time (s)", "y": "Average pedestrian delay (s)"}}, "p1|phase_switches": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "1500 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [284.0, 211.667, 162.667, 132.0, 111.0, 95.333], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "1500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "2500 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [320.333, 220.667, 167.333, 135.667, 114.0, 98.0], "line": {"color": "#E69F00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "2500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "3250 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [321.333, 229.667, 170.0, 137.667, 115.667, 100.0], "line": {"color": "#D55E00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#D55E00"}, "hovertemplate": "3250 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Minimum green time (s)", "y": "Phase changes per hour"}}, "p1|throughput": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "1500 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [1752.7, 1751.3, 1752.3, 1752.0, 1748.7, 1747.7], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "1500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "2500 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [2736.0, 2731.3, 2728.7, 2728.7, 2716.0, 2720.3], "line": {"color": "#E69F00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "2500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "3250 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [3300.0, 3428.7, 3437.3, 3450.3, 3437.7, 3428.3], "line": {"color": "#D55E00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#D55E00"}, "hovertemplate": "3250 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Minimum green time (s)", "y": "Throughput (veh/h)"}}, "p1|max_ped": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "1500 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [30.333, 33.0, 40.333, 42.667, 51.333, 58.667], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "1500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "2500 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [33.667, 55.333, 46.667, 56.0, 67.333, 68.667], "line": {"color": "#E69F00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "2500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "3250 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [36.667, 54.667, 67.667, 64.0, 81.333, 83.333], "line": {"color": "#D55E00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#D55E00"}, "hovertemplate": "3250 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Minimum green time (s)", "y": "Maximum pedestrian delay (s)"}}, "p1|jfi": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "1500 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [0.654, 0.669, 0.656, 0.644, 0.649, 0.655], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "1500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "2500 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [0.646, 0.639, 0.636, 0.636, 0.637, 0.64], "line": {"color": "#E69F00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "2500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "3250 veh/h", "x": [5, 10, 15, 20, 25, 30], "y": [0.756, 0.675, 0.653, 0.666, 0.674, 0.677], "line": {"color": "#D55E00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#D55E00"}, "hovertemplate": "3250 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Minimum green time (s)", "y": "Jain\u2019s fairness index"}}, "p2|10|avg_veh_delay": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "1500 veh/h", "x": [1, 2, 5, 10], "y": [11.654, 10.802, 10.652, 10.692], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "1500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "2500 veh/h", "x": [1, 2, 5, 10], "y": [14.504, 13.91, 14.53, 13.808], "line": {"color": "#E69F00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "2500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "3250 veh/h", "x": [1, 2, 5, 10], "y": [31.538, 28.44, 31.032, 30.378], "line": {"color": "#D55E00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#D55E00"}, "hovertemplate": "3250 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Decision interval (s)", "y": "Average vehicle delay (s)"}}, "p2|10|phase_switches": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "1500 veh/h", "x": [1, 2, 5, 10], "y": [214.0, 214.0, 213.4, 209.4], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "1500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "2500 veh/h", "x": [1, 2, 5, 10], "y": [220.4, 219.8, 219.6, 221.4], "line": {"color": "#E69F00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "2500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "3250 veh/h", "x": [1, 2, 5, 10], "y": [230.2, 228.6, 229.0, 225.0], "line": {"color": "#D55E00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#D55E00"}, "hovertemplate": "3250 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Decision interval (s)", "y": "Phase changes per hour"}}, "p2|15|avg_veh_delay": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "1500 veh/h", "x": [1, 3, 5, 15], "y": [12.772, 13.098, 13.292, 13.144], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "1500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "2500 veh/h", "x": [1, 3, 5, 15], "y": [16.378, 16.924, 16.334, 16.118], "line": {"color": "#E69F00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "2500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "3250 veh/h", "x": [1, 3, 5, 15], "y": [25.478, 25.862, 26.036, 24.488], "line": {"color": "#D55E00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#D55E00"}, "hovertemplate": "3250 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Decision interval (s)", "y": "Average vehicle delay (s)"}}, "p2|15|phase_switches": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "1500 veh/h", "x": [1, 3, 5, 15], "y": [162.6, 163.0, 163.2, 162.6], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "1500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "2500 veh/h", "x": [1, 3, 5, 15], "y": [167.6, 167.6, 167.0, 166.6], "line": {"color": "#E69F00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "2500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "3250 veh/h", "x": [1, 3, 5, 15], "y": [171.0, 171.2, 170.2, 170.8], "line": {"color": "#D55E00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#D55E00"}, "hovertemplate": "3250 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Decision interval (s)", "y": "Phase changes per hour"}}, "p2|20|avg_veh_delay": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "1500 veh/h", "x": [1, 2, 4, 5, 10, 20], "y": [15.493, 15.763, 15.763, 15.117, 15.01, 14.353], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "1500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "2500 veh/h", "x": [1, 2, 4, 5, 10, 20], "y": [19.48, 19.443, 19.27, 19.39, 20.707, 19.783], "line": {"color": "#E69F00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "2500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "3250 veh/h", "x": [1, 2, 4, 5, 10, 20], "y": [27.367, 27.71, 27.897, 27.997, 26.61, 27.58], "line": {"color": "#D55E00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#D55E00"}, "hovertemplate": "3250 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Decision interval (s)", "y": "Average vehicle delay (s)"}}, "p2|20|phase_switches": {"traces": [{"type": "scatter", "mode": "lines+markers", "name": "1500 veh/h", "x": [1, 2, 4, 5, 10, 20], "y": [132.333, 132.667, 132.667, 132.0, 132.0, 131.0], "line": {"color": "#0072B2", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#0072B2"}, "hovertemplate": "1500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "2500 veh/h", "x": [1, 2, 4, 5, 10, 20], "y": [136.333, 136.0, 135.667, 135.667, 135.667, 135.0], "line": {"color": "#E69F00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#E69F00"}, "hovertemplate": "2500 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "3250 veh/h", "x": [1, 2, 4, 5, 10, 20], "y": [137.667, 137.0, 137.333, 137.667, 137.667, 137.0], "line": {"color": "#D55E00", "width": 2.4, "dash": "solid"}, "marker": {"size": 7, "color": "#D55E00"}, "hovertemplate": "3250 veh/h<br>%{x}: %{y:.2f}<extra></extra>"}], "layout": {"x": "Decision interval (s)", "y": "Phase changes per hour"}}};
+
+const SEL = {}; PAGE.selectors.forEach(s => SEL[s.id] = s.options[0][0]);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const $ = id => document.getElementById(id);
+const names = []; const colors = {};
+Object.values(DATA).forEach(d => d.traces.forEach(t => { if (!names.includes(t.name)) { names.push(t.name);
+  colors[t.name] = t.line ? t.line.color : t.colorscale[0][1]; } }));
+const ON = {}; names.forEach(n => ON[n] = true);
+function controls() {
+  const c = $("ctl");
+  PAGE.selectors.forEach(s => {
+    const g = document.createElement("div"); g.className = "grp";
+    g.innerHTML = `<span>${s.label}</span>`; const seg = document.createElement("div"); seg.className = "seg"; seg.setAttribute("role", "group");
+    s.options.forEach(([v, l]) => { const b = document.createElement("button"); b.textContent = l; b.setAttribute("aria-pressed", v === SEL[s.id]);
+      b.onclick = () => { SEL[s.id] = v; [...seg.children].forEach(x => x.setAttribute("aria-pressed", x === b)); draw(); }; seg.appendChild(b); });
+    g.appendChild(seg); c.appendChild(g);
+  });
+  const g = document.createElement("div"); g.className = "grp"; g.innerHTML = "<span>Show</span>";
+  const ch = document.createElement("div"); ch.className = "checks";
+  names.forEach(n => { const l = document.createElement("label");
+    l.innerHTML = `<input type="checkbox" checked> <span class="sw" style="background:${colors[n]}"></span> ${n}`;
+    l.querySelector("input").onchange = e => { ON[n] = e.target.checked; draw(); }; ch.appendChild(l); });
+  g.appendChild(ch); c.appendChild(g);
+}
+function layout(L) {
+  const fg = css("--text"), gr = css("--line"), bg = css("--bg");
+  const base = { paper_bgcolor: bg, plot_bgcolor: bg, font: { family: "IBM Plex Sans, Helvetica, Arial, sans-serif", color: fg, size: 12 },
+                 showlegend: false, margin: { l: 64, r: 18, t: 14, b: 56 }, hoverlabel: { font: { family: "IBM Plex Sans, Helvetica, Arial, sans-serif" } } };
+  if (L.three) {
+    const ax = (t, tv) => ({ title: { text: t }, color: fg, gridcolor: gr, zerolinecolor: gr, backgroundcolor: bg, showbackground: true, ...(tv ? { tickvals: tv } : {}) });
+    return { ...base, margin: { l: 0, r: 0, t: 0, b: 0 }, scene: { xaxis: ax(L.x, L.xt), yaxis: ax(L.y, L.yt), zaxis: ax(L.z),
+             camera: { eye: { x: -1.55, y: -1.6, z: 0.85 } }, aspectmode: "manual", aspectratio: { x: 1.2, y: 1, z: 0.7 } } };
+  }
+  const shapes = [];
+  if (L.vline !== undefined) shapes.push({ type: "line", xref: "x", yref: "paper", x0: L.vline, x1: L.vline, y0: 0, y1: 1, line: { color: css("--muted"), dash: "dash", width: 1 } });
+  if (L.band !== undefined) shapes.push({ type: "rect", xref: "paper", yref: "y", x0: 0, x1: 1, y0: -L.band, y1: L.band, fillcolor: css("--line"), opacity: 0.45, line: { width: 0 }, layer: "below" });
+  return { ...base, shapes,
+    xaxis: { title: { text: L.x }, gridcolor: gr, zerolinecolor: gr, ...(L.xlog ? { type: "log" } : {}), ...(L.xticks ? { tickvals: L.xticks, ticktext: L.xticks.map(String) } : {}) },
+    yaxis: { title: { text: L.y }, gridcolor: gr, zerolinecolor: gr, ...(L.yrange ? { range: L.yrange } : {}) } };
+}
+const config = { responsive: true, displaylogo: false, toImageButtonOptions: { format: "png", scale: 3, filename: PAGE.file.replace(".html", "") } };
+function draw() {
+  PAGE.plots.forEach(p => {
+    const spec = DATA[p.id + "|" + p.uses.map(u => SEL[u]).join("|")];
+    const traces = spec.traces.map(t => ({ ...t, visible: ON[t.name] ? true : false }));
+    Plotly.react(p.id, traces, layout(spec.layout), config);
+  });
+}
+if (window.Plotly) {
+  controls(); draw();
+  const mq = window.matchMedia("(prefers-color-scheme: dark)"); if (mq.addEventListener) mq.addEventListener("change", draw);
+  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+} else { PAGE.plots.forEach(p => $(p.id).innerHTML = '<p class="err">The chart library could not load. Please check the internet connection and reload.</p>'); }
+</script>
+</body>
+</html>
