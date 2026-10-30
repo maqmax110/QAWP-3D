@@ -3,50 +3,146 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>QAWP – interactive results</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<title>QAWP – results dashboard</title>
 <style>
-:root{--bg:#ffffff;--surface:#f4f6f8;--text:#1d2329;--muted:#5d6873;--line:#d9dee3;--accent:#1f5f99;--accent-text:#ffffff;--card:#f7f9fb;
+:root{--bg:#ffffff;--surface:#f4f6f8;--card:#ffffff;--text:#000000;--muted:#5e6670;--line:#dcdfe3;--accent:#0065BD;--accent-text:#ffffff;--kpi:#0065BD;
   color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181c;--surface:#1d2329;--text:#e6eaee;--muted:#9aa5b0;--line:#2f3740;--accent:#6aa7e0;--accent-text:#0e1215;--card:#192026;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#14181c;--surface:#1d2329;--text:#e6eaee;--muted:#9aa5b0;--line:#2f3740;--accent:#6aa7e0;--accent-text:#0e1215;--card:#192026;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121619;--surface:#1b2026;--card:#171c21;--text:#eef1f4;--muted:#a3adb7;--line:#2c343c;--accent:#64A0C8;--accent-text:#0b0e11;--kpi:#98C6EA;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121619;--surface:#1b2026;--card:#171c21;--text:#eef1f4;--muted:#a3adb7;--line:#2c343c;--accent:#64A0C8;--accent-text:#0b0e11;--kpi:#98C6EA;color-scheme:dark}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
-body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
-main{max-width:1080px;margin:0 auto;padding:22px 20px 44px}
-nav.top{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:.86rem;margin:0 0 18px;padding-bottom:12px;border-bottom:1px solid var(--line)}
-nav.top a{color:var(--muted);text-decoration:none} nav.top a:hover{color:var(--text)} nav.top a.cur{color:var(--accent);font-weight:600}
-nav.top .home{color:var(--text);font-weight:600;margin-right:8px}
-.tag{display:inline-block;font-size:.75rem;font-weight:600;letter-spacing:.03em;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:1px 9px;margin-bottom:6px}
-h1{font-size:1.5rem;font-weight:600;line-height:1.25;margin:0 0 6px;max-width:40ch}
-h2{font-size:1.02rem;font-weight:600;margin:20px 0 8px}
-.sub{color:var(--muted);margin:0 0 16px;max-width:72ch;font-size:.95rem}
-.ctl{display:flex;flex-direction:column;gap:10px;margin:0 0 12px}
-.grp{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
-.grp>span{font-size:.82rem;color:var(--muted);min-width:11.5em}
-.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.seg button{font:inherit;font-size:.85rem;padding:6px 11px;border:0;background:var(--surface);color:var(--text);cursor:pointer}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Liberation Sans",Helvetica,sans-serif;line-height:1.45}
+main{max-width:1240px;margin:0 auto;padding:20px 20px 48px}
+nav.top{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:.85rem;margin:0 0 18px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+nav.top a{color:var(--muted);text-decoration:none} nav.top a:hover{color:var(--text)} nav.top .home{color:var(--accent);font-weight:700;margin-right:8px}
+h1{font-size:1.6rem;line-height:1.25;margin:0 0 6px;max-width:44ch}
+.sub{color:var(--muted);margin:0 0 18px;max-width:80ch;font-size:.95rem}
+.controls{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:0 0 18px}
+.grp{display:flex;gap:8px;align-items:center;flex-wrap:wrap} .grp>span{font-size:.82rem;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card)}
+.seg button{font:inherit;font-size:.85rem;padding:6px 12px;border:0;background:transparent;color:var(--text);cursor:pointer}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-text)}
-.checks{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.88rem}
-.checks label{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
-.sw{display:inline-block;width:12px;height:12px;border-radius:3px}
-.plot{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
-.notes{margin-top:18px;font-size:.87rem;color:var(--muted);max-width:78ch} .notes p{margin:0 0 8px}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin-top:8px}
-.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 16px 14px;color:var(--text);text-decoration:none}
-.card:hover{border-color:var(--accent)} .card h3{margin:2px 0 6px;font-size:1rem;line-height:1.3} .card p{margin:0;color:var(--muted);font-size:.88rem}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 18px}
+.kpi{display:flex;flex-direction:column;gap:4px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:10px;color:var(--text);text-decoration:none}
+.kpi:hover{border-color:var(--accent)}
+.kl{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em} .kv{font-size:1.9rem;font-weight:700;color:var(--kpi);line-height:1.15} .ks{font-size:.84rem;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 12px 6px}
+.th{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:0 4px 6px}
+.th h2{font-size:1rem;margin:0 0 2px} .th p{margin:0;font-size:.8rem;color:var(--muted)} .th a{font-size:.82rem;color:var(--accent);text-decoration:none;white-space:nowrap}
+.plot{width:100%;height:330px}
+h2.more{font-size:1.1rem;margin:30px 0 8px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;color:var(--text);text-decoration:none}
+.card:hover{border-color:var(--accent)} .card h3{margin:2px 0 6px;font-size:.98rem} .card p{margin:0;color:var(--muted);font-size:.85rem}
+.tag{display:inline-block;font-size:.72rem;font-weight:700;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+.foot{margin-top:22px;font-size:.82rem;color:var(--muted);max-width:90ch}
 .err{padding:16px;color:var(--muted)}
+@media (max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}}
+@media (max-width:520px){.kpis{grid-template-columns:1fr}.kv{font-size:1.6rem}}
 </style>
 </head>
 <body>
 <main>
 <nav class="top"><a class="home" href="index.html">QAWP results</a><a href="penetration-3d.html">Penetration &amp; demand (3D)</a><a href="demand-sweep.html">Demand sweep</a><a href="timing.html">Signal timing</a><a href="weights-3d.html">Queue weight (3D)</a><a href="tradeoff.html">Efficiency vs fairness</a><a href="vru-weight.html">VRU weighting</a><a href="observability.html">Observability</a><a href="perception-cost.html">Cost of perception</a></nav>
-<h1>Queue-aware signal control under mixed traffic: interactive results</h1>
-<p class="sub">Interactive companion to the master’s thesis “Queue-Aware Delay Balancing at Automated Intersections under Mixed Traffic”, Technical University of Munich, 2026. Each chart has controls to switch measures and to show or hide individual curves.</p>
-<div class="cards"><a class="card" href="penetration-3d.html"><span class="tag">Main question · RQ1 · RQ3</span><h3>Penetration and demand (3D)</h3><p>Interactive 3D surfaces of QAWP with CAV perception, QAWP with perfect information and the fixed-time programme, plus the queue-weight view.</p></a><a class="card" href="demand-sweep.html"><span class="tag">Main question</span><h3>Demand sweep</h3><p>Delay, fairness, throughput and switching of QAWP and both fixed-time baselines for 1000–4000 veh/h.</p></a><a class="card" href="timing.html"><span class="tag">Timing parameters</span><h3>Signal timing</h3><p>Why the best minimum green rises near capacity, and why the decision interval has no measurable effect.</p></a><a class="card" href="weights-3d.html"><span class="tag">RQ1</span><h3>Queue weight (3D)</h3><p>3D surfaces over queue weight and demand, one per pedestrian volume.</p></a><a class="card" href="tradeoff.html"><span class="tag">RQ2</span><h3>Efficiency vs fairness</h3><p>Moving from waiting time to queue length lowers both delays but spreads waiting less evenly.</p></a><a class="card" href="vru-weight.html"><span class="tag">RQ2</span><h3>VRU weighting</h3><p>Strong VRU weighting helps at normal pedestrian volumes; at high volumes only a mild weight helps.</p></a><a class="card" href="observability.html"><span class="tag">RQ3</span><h3>Observability</h3><p>Observability by road-user type and the error of the estimated queue and waiting time, 5–100 % CAVs.</p></a><a class="card" href="perception-cost.html"><span class="tag">RQ3</span><h3>Cost of perception</h3><p>Extra delay of perception-based QAWP compared with perfect information, as a percentage or per connected vehicle.</p></a></div>
+<h1>Queue-aware signal control under mixed traffic: results at a glance</h1>
+<p class="sub">Master’s thesis “Queue-Aware Delay Balancing at Automated Intersections under Mixed Traffic”, Technical University of Munich, 2026. All charts respond to the controls below; each links to a detailed page.</p>
+<div class="controls">
+  <div class="grp"><span>Road user</span><div class="seg" id="sUser"><button data-v="veh" aria-pressed="true">Vehicles</button><button data-v="ped" aria-pressed="false">Pedestrians</button></div></div>
+  <div class="grp"><span>Vehicle demand</span><div class="seg" id="sDem"><button data-v="1000" aria-pressed="false">1000 veh/h</button><button data-v="1500" aria-pressed="false">1500 veh/h</button><button data-v="2500" aria-pressed="true">2500 veh/h</button><button data-v="3250" aria-pressed="false">3250 veh/h</button></div></div>
+</div>
+<div class="kpis"><a class="kpi" href="demand-sweep.html"><span class="kl">Less delay than fixed-time control</span><span class="kv" id="t1"></span><span class="ks" id="t1s">below capacity, against the better of two fixed-time plans</span></a><a class="kpi" href="perception-cost.html"><span class="kl">Connected vehicles needed</span><span class="kv" id="t2">≈ 200 / h</span><span class="ks" id="t2s">for near-perfect control; about 70 per hour already beat fixed-time control</span></a><a class="kpi" href="weights-3d.html"><span class="kl">Best queue weight</span><span class="kv" id="t3">w₁ = 0.75</span><span class="ks" id="t3s">within 0.8 s of the best weight at every penetration rate; waiting time alone is always worst</span></a><a class="kpi" href="vru-weight.html"><span class="kl">Weight of one pedestrian or cyclist</span><span class="kv" id="t4">1.5 × a car</span><span class="ks" id="t4s">helps at every pedestrian volume; 2 × and more backfires at high volumes</span></a></div>
+<div class="grid"><section class="tile"><div class="th"><div><h2>QAWP against fixed-time control</h2><p>Average delay over vehicle demand</p></div><a href="demand-sweep.html">Details →</a></div><div class="plot" id="c1"></div></section><section class="tile"><div class="th"><div><h2>Effect of CAV penetration</h2><p>QAWP with CAV perception, perfect information and fixed-time control</p></div><a href="perception-cost.html">Details →</a></div><div class="plot" id="c2"></div></section><section class="tile"><div class="th"><div><h2>Cost of imperfect perception</h2><p>Extra delay compared with perfect information, all demand levels</p></div><a href="perception-cost.html">Details →</a></div><div class="plot" id="c3"></div></section><section class="tile"><div class="th"><div><h2>What the CAV fleet can see</h2><p>Observability by road-user type</p></div><a href="observability.html">Details →</a></div><div class="plot" id="c4"></div></section><section class="tile"><div class="th"><div><h2>Queue weight by penetration</h2><p>QAWP with CAV perception at 2500 veh/h; box = best weight</p></div><a href="weights-3d.html">Details →</a></div><div class="plot" id="c5"></div></section><section class="tile"><div class="th"><div><h2>Weighting pedestrians and cyclists</h2><p>Effect of the VRU weight on delay</p></div><a href="vru-weight.html">Details →</a></div><div class="plot" id="c6"></div></section></div>
+<h2 class="more">Explore the results in detail</h2>
+<div class="cards"><a class="card" href="penetration-3d.html"><span class="tag">Main question · RQ1 · RQ3</span><h3>Penetration and demand (3D)</h3><p>Interactive 3D surfaces of QAWP with CAV perception, QAWP with perfect information and the fixed-time programme.</p></a><a class="card" href="demand-sweep.html"><span class="tag">Main question</span><h3>Demand sweep</h3><p>Delay, fairness, throughput and switching of QAWP and both fixed-time baselines for 1000–4000 veh/h.</p></a><a class="card" href="timing.html"><span class="tag">Timing parameters</span><h3>Signal timing</h3><p>Why the best minimum green rises near capacity, and why the decision interval has no measurable effect.</p></a><a class="card" href="weights-3d.html"><span class="tag">RQ1</span><h3>Queue weight (3D)</h3><p>3D surfaces over queue weight and demand, one per pedestrian volume.</p></a><a class="card" href="tradeoff.html"><span class="tag">RQ2</span><h3>Efficiency vs fairness</h3><p>Moving from waiting time to queue length lowers both delays but spreads waiting less evenly.</p></a><a class="card" href="vru-weight.html"><span class="tag">RQ2</span><h3>VRU weighting</h3><p>Strong VRU weighting helps at normal pedestrian volumes; at high volumes only a mild weight helps.</p></a><a class="card" href="observability.html"><span class="tag">RQ3</span><h3>Observability</h3><p>Observability by road-user type and the error of the estimated queue and waiting time, 5–100 % CAVs.</p></a><a class="card" href="perception-cost.html"><span class="tag">RQ3</span><h3>Cost of perception</h3><p>Extra delay of perception-based QAWP compared with perfect information, as a percentage or per connected vehicle.</p></a></div>
+<p class="foot">Simulated in SUMO at a signalised four-leg intersection with turn pockets and protected left-turn phases. Unless stated otherwise: 50 % CAVs, 300 pedestrians/h, minimum green 10 s, w₁ = w₂ = 0.5. Values are means over three to fifteen simulation runs; comparisons between controllers use identical traffic. Use the camera icon on a chart to save it as an image.</p>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.27.0/plotly.min.js"></script>
+<script>
+const D = {"sweep": {"dem": [1000, 1500, 2000, 2500, 3000, 3250, 3500, 3750, 4000], "qawp": {"avg_veh_delay": [9.727, 10.683, 11.9, 14.047, 19.39, 27.3, 36.907, 41.053, 43.923], "avg_ped_delay": [8.803, 10.04, 11.13, 12.4, 12.283, 14.433, 13.093, 13.81, 15.8], "max_ped": [31.667, 33.0, 41.0, 55.333, 38.0, 54.667, 57.667, 43.0, 71.667], "max_veh": [35.667, 38.667, 53.0, 67.333, 75.0, 83.333, 86.0, 91.0, 89.0], "jfi": [0.668, 0.669, 0.655, 0.639, 0.652, 0.675, 0.761, 0.811, 0.838], "phase_switches": [202.333, 211.667, 217.0, 220.667, 225.667, 229.667, 223.667, 205.333, 195.0], "throughput": [1258.7, 1751.3, 2243.3, 2731.3, 3214.3, 3428.7, 3522.7, 3470.0, 3247.0], "unserved": [0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.75, 3.57, 8.81]}, "alternating": {"avg_veh_delay": [16.777, 16.75, 17.763, 21.723, 35.193, 43.443, 44.047, 45.577, 46.59], "avg_ped_delay": [13.85, 13.99, 13.837, 13.643, 14.517, 14.187, 14.76, 14.817, 15.247], "max_ped": [41.0, 41.667, 39.667, 41.333, 55.333, 44.0, 53.0, 52.0, 60.0], "max_veh": [44.667, 76.667, 76.0, 83.667, 91.667, 93.667, 93.0, 94.0, 93.0], "jfi": [0.684, 0.664, 0.656, 0.623, 0.704, 0.792, 0.799, 0.808, 0.811], "phase_switches": [94.0, 94.0, 94.0, 94.0, 94.0, 94.0, 94.0, 94.0, 94.0], "throughput": [1255.3, 1746.7, 2240.3, 2723.0, 3167.7, 3250.7, 3307.3, 3347.3, 3272.7], "unserved": [0.0, 0.0, 0.0, 0.0, 0.01, 1.48, 3.66, 5.99, 9.47]}, "fixedtime": {"avg_veh_delay": [21.99, 21.253, 21.267, 23.19, 26.523, 29.6, 39.423, 44.07, 46.213], "avg_ped_delay": [16.023, 16.09, 16.163, 15.99, 16.137, 16.017, 16.09, 16.06, 15.977], "max_ped": [46.0, 46.333, 46.667, 46.667, 45.667, 45.0, 46.0, 46.667, 45.667], "max_veh": [58.0, 61.0, 63.667, 79.667, 83.0, 86.667, 88.333, 88.667, 88.667], "jfi": [0.676, 0.667, 0.668, 0.664, 0.673, 0.686, 0.759, 0.814, 0.832], "phase_switches": [null, null, null, null, null, null, null, null, null], "throughput": [1254.7, 1741.3, 2233.3, 2720.0, 3202.3, 3425.7, 3548.3, 3591.0, 3460.0], "unserved": [0.0, 0.0, 0.0, 0.01, 0.01, 0.0, 0.77, 2.4, 6.57]}}, "pen": {"pen": [5, 7, 10, 12, 15, 17, 20, 40, 60, 80, 100], "dem": [1000, 1500, 2500, 3250], "1000": {"avg_observability_pct": [6.26, 8.62, 11.98, 15.24, 17.96, 19.98, 22.58, 36.32, 45.68, 52.76, 58.72], "avg_observability_pct_HDV": [8.62, 11.54, 15.04, 18.64, 21.22, 23.78, 26.76, 41.12, 50.86, 57.06, null], "avg_observability_pct_ped": [5.18, 7.22, 10.96, 14.04, 16.7, 18.58, 21.4, 35.08, 44.9, 52.44, 58.86], "avg_observability_pct_bike": [4.88, 7.48, 10.84, 13.98, 17.8, 19.38, 21.7, 36.62, 46.48, 54.24, 60.22], "perceived_queue_error": [1.147, 0.803, 0.53, 0.377, 0.374, 0.351, 0.297, 0.207, 0.175, 0.157, 0.145], "perceived_wait_error": [6.598, 4.441, 2.613, 1.828, 1.433, 1.29, 0.907, 0.246, 0.12, 0.07, 0.048], "veh_cav": [29.876, 20.726, 15.14, 14.142, 12.088, 12.096, 11.34, 10.792, 10.064, 10.002, 9.956], "veh_gt": [10.406, 10.536, 10.362, 10.298, 10.042, 10.422, 10.22, 10.068, 10.108, 9.934, 9.306], "veh_pen": [187.1, 96.7, 46.1, 37.3, 20.4, 16.1, 11.0, 7.2, -0.4, 0.7, 7.0], "ped_cav": [25.934, 17.096, 13.808, 13.354, 10.25, 10.156, 10.092, 9.792, 9.442, 9.164, 8.78], "ped_gt": [9.3, 9.518, 9.256, 8.72, 9.198, 9.222, 9.722, 8.806, 9.514, 8.774, 8.85], "ped_pen": [178.9, 79.6, 49.2, 53.1, 11.4, 10.1, 3.8, 11.2, -0.8, 4.4, -0.8], "cav_per_h": [50.0, 70.0, 100.0, 120.0, 150.0, 170.0, 200.0, 400.0, 600.0, 800.0, 1000.0]}, "1500": {"avg_observability_pct": [9.48, 14.12, 18.7, 21.16, 25.24, 27.48, 31.4, 46.973, 57.36, 64.713, 70.813], "avg_observability_pct_HDV": [11.5, 16.82, 21.56, 24.22, 28.98, 31.32, 35.48, 51.373, 61.42, 67.627, null], "avg_observability_pct_ped": [8.14, 12.4, 16.96, 19.66, 23.34, 25.66, 29.5, 45.453, 56.493, 64.473, 70.747], "avg_observability_pct_bike": [8.06, 12.56, 17.7, 19.44, 23.38, 25.86, 29.7, 46.427, 57.5, 65.567, 72.047], "perceived_queue_error": [0.909, 0.656, 0.516, 0.449, 0.359, 0.313, 0.295, 0.397, 0.366, 0.348, 0.284], "perceived_wait_error": [4.515, 2.805, 2.066, 1.442, 1.009, 0.843, 0.65, 0.336, 0.182, 0.14, 0.077], "veh_cav": [19.272, 14.764, 13.664, 12.732, 11.722, 11.468, 11.654, 10.912, 10.644, 10.436, 10.426], "veh_gt": [10.946, 11.062, 10.946, 10.984, 10.546, 11.27, 10.858, 10.759, 10.713, 10.354, 10.332], "veh_pen": [76.1, 33.5, 24.8, 15.9, 11.2, 1.8, 7.3, 1.4, -0.6, 0.8, 0.9], "ped_cav": [16.372, 12.504, 11.286, 10.4, 9.458, 9.834, 9.982, 9.973, 9.808, 9.636, 9.873], "ped_gt": [9.184, 10.18, 9.9, 9.242, 8.736, 10.47, 9.734, 9.826, 9.509, 9.901, 9.571], "ped_pen": [78.3, 22.8, 14.0, 12.5, 8.3, -6.1, 2.5, 1.5, 3.1, -2.7, 3.2], "cav_per_h": [75.0, 105.0, 150.0, 180.0, 225.0, 255.0, 300.0, 600.0, 900.0, 1200.0, 1500.0]}, "2500": {"avg_observability_pct": [18.0, 22.96, 30.3, 33.54, 39.96, 42.0, 46.68, 64.227, 74.347, 81.093, 85.967], "avg_observability_pct_HDV": [20.08, 25.48, 33.54, 36.9, 43.66, 45.78, 50.68, 67.96, 77.4, 83.687, null], "avg_observability_pct_ped": [15.8, 20.46, 27.2, 30.06, 36.54, 38.5, 43.06, 61.793, 73.12, 80.593, 86.013], "avg_observability_pct_bike": [14.84, 19.5, 26.16, 30.22, 35.7, 38.0, 42.52, 61.6, 73.067, 80.74, 86.293], "perceived_queue_error": [1.083, 0.761, 0.572, 0.483, 0.439, 0.398, 0.35, 0.475, 0.411, 0.347, 0.287], "perceived_wait_error": [4.438, 2.865, 1.968, 1.31, 1.232, 0.867, 0.721, 0.484, 0.364, 0.181, 0.061], "veh_cav": [17.976, 15.11, 14.84, 14.516, 16.094, 14.744, 14.576, 14.657, 14.689, 13.803, 13.748], "veh_gt": [14.494, 14.776, 15.42, 16.048, 14.674, 14.098, 14.16, 14.822, 13.86, 13.846, 13.759], "veh_pen": [24.0, 2.3, -3.8, -9.5, 9.7, 4.6, 2.9, -1.1, 6.0, -0.3, -0.1], "ped_cav": [14.39, 11.702, 11.658, 11.004, 14.048, 10.658, 10.944, 12.155, 12.496, 11.627, 11.527], "ped_gt": [11.678, 11.51, 12.378, 13.094, 11.174, 10.844, 12.122, 11.806, 11.157, 11.653, 12.082], "ped_pen": [23.2, 1.7, -5.8, -16.0, 25.7, -1.7, -9.7, 3.0, 12.0, -0.2, -4.6], "cav_per_h": [125.0, 175.0, 250.0, 300.0, 375.0, 425.0, 500.0, 1000.0, 1500.0, 2000.0, 2500.0]}, "3250": {"avg_observability_pct": [26.44, 35.0, 44.96, 50.34, 56.32, 60.4, 64.04, 82.247, 88.76, 93.387, 95.333], "avg_observability_pct_HDV": [27.52, 36.06, 46.72, 52.28, 58.3, 62.14, 65.78, 84.087, 90.407, 94.567, null], "avg_observability_pct_ped": [24.9, 34.14, 42.94, 48.26, 54.26, 59.28, 62.82, 81.093, 88.06, 93.427, 95.707], "avg_observability_pct_bike": [22.86, 30.72, 38.4, 42.86, 49.2, 54.0, 57.56, 76.36, 85.093, 91.287, 94.5], "perceived_queue_error": [2.567, 2.297, 1.523, 1.411, 1.152, 1.597, 1.173, 1.771, 1.177, 0.867, 0.29], "perceived_wait_error": [9.657, 8.185, 5.699, 4.76, 3.681, 3.73, 3.099, 3.171, 1.928, 0.973, 0.013], "veh_cav": [30.598, 31.558, 29.326, 29.4, 29.172, 30.546, 29.916, 30.495, 29.732, 31.56, 31.921], "veh_gt": [29.306, 27.86, 29.654, 25.916, 29.024, 28.636, 28.206, 30.595, 30.854, 31.175, 31.053], "veh_pen": [4.4, 13.3, -1.1, 13.4, 0.5, 6.7, 6.1, -0.3, -3.6, 1.2, 2.8], "ped_cav": [14.784, 14.368, 13.196, 14.884, 13.412, 13.458, 14.526, 14.275, 13.417, 13.827, 13.677], "ped_gt": [14.386, 14.824, 12.868, 14.278, 13.18, 14.798, 13.756, 13.882, 14.571, 13.174, 14.375], "ped_pen": [2.8, -3.1, 2.5, 4.2, 1.8, -9.1, 5.6, 2.8, -7.9, 5.0, -4.9], "cav_per_h": [162.5, 227.5, 325.0, 390.0, 487.5, 552.5, 650.0, 1300.0, 1950.0, 2600.0, 3250.0]}}, "thr": {"pen": [5, 7, 10, 12, 15, 17, 20, 40, 60, 80, 100], "dem": [1000, 1500, 2500, 3250], "veh_cav": [[29.88, 20.73, 15.14, 14.14, 12.09, 12.1, 11.34, 10.79, 10.06, 10.0, 9.96], [19.27, 14.76, 13.66, 12.73, 11.72, 11.47, 11.65, 10.8, 10.92, 10.05, 10.38], [17.98, 15.11, 14.84, 14.52, 16.09, 14.74, 14.58, 15.42, 15.83, 14.07, 13.55], [30.6, 31.56, 29.33, 29.4, 29.17, 30.55, 29.92, 30.92, 29.84, 32.5, 33.02]], "veh_gt": [[10.41, 10.54, 10.36, 10.3, 10.04, 10.42, 10.22, 10.07, 10.11, 9.93, 9.31], [10.95, 11.06, 10.95, 10.98, 10.55, 11.27, 10.86, 11.05, 10.64, 10.19, 10.29], [14.49, 14.78, 15.42, 16.05, 14.67, 14.1, 14.16, 16.33, 13.47, 14.02, 13.94], [29.31, 27.86, 29.65, 25.92, 29.02, 28.64, 28.21, 30.81, 30.67, 31.5, 30.98]], "veh_fixed": [[22.38, 22.4, 22.22, 22.18, 21.95, 22.25, 22.3, 21.44, 21.46, 21.41, 21.17], [22.34, 22.17, 22.19, 22.5, 21.88, 22.16, 22.24, 21.63, 21.46, 21.12, 20.73], [22.81, 22.85, 22.63, 22.78, 22.57, 22.59, 22.75, 22.91, 22.36, 22.2, 22.35], [28.1, 29.17, 29.5, 29.78, 27.39, 29.37, 31.6, 31.73, 32.63, 32.27, 33.86]], "ped_cav": [[25.93, 17.1, 13.81, 13.35, 10.25, 10.16, 10.09, 9.79, 9.44, 9.16, 8.78], [16.37, 12.5, 11.29, 10.4, 9.46, 9.83, 9.98, 9.59, 9.74, 9.73, 10.82], [14.39, 11.7, 11.66, 11.0, 14.05, 10.66, 10.94, 12.39, 14.69, 11.63, 10.96], [14.78, 14.37, 13.2, 14.88, 13.41, 13.46, 14.53, 14.02, 13.69, 13.74, 14.39]], "ped_gt": [[9.3, 9.52, 9.26, 8.72, 9.2, 9.22, 9.72, 8.81, 9.51, 8.77, 8.85], [9.18, 10.18, 9.9, 9.24, 8.74, 10.47, 9.73, 9.82, 9.23, 9.25, 9.48], [11.68, 11.51, 12.38, 13.09, 11.17, 10.84, 12.12, 12.52, 10.87, 11.5, 12.22], [14.39, 14.82, 12.87, 14.28, 13.18, 14.8, 13.76, 13.52, 13.3, 13.01, 14.65]], "ped_fixed": [[16.1, 16.25, 16.31, 16.77, 16.12, 16.13, 16.77, 16.05, 16.53, 16.25, 17.4], [16.25, 16.07, 16.28, 16.93, 16.08, 16.69, 16.27, 16.12, 16.28, 16.17, 17.79], [16.12, 16.33, 16.32, 16.48, 16.03, 16.71, 16.56, 16.4, 15.89, 16.31, 17.55], [16.41, 16.66, 16.5, 16.01, 16.71, 16.26, 16.74, 16.44, 16.17, 16.36, 17.67]]}, "w": {"pen": [5, 10, 20, 30, 50, 80], "w1": [0.0, 0.25, 0.5, 0.75, 1.0], "veh": [[19.14, 18.24, 17.98, 17.46, 16.87], [16.74, 15.85, 14.84, 14.4, 15.84], [15.84, 15.85, 14.58, 14.07, 13.76], [15.41, 15.11, 14.42, 14.02, 13.35], [17.95, 15.21, 13.22, 13.67, 13.73], [14.9, 14.41, 14.07, 13.57, 13.31]], "ped": [[14.88, 13.7, 14.39, 12.19, 13.13], [12.69, 11.57, 11.66, 10.02, 12.58], [12.94, 13.26, 10.94, 11.13, 10.76], [12.29, 11.7, 10.47, 10.55, 10.63], [14.99, 12.92, 10.32, 11.11, 11.4], [11.95, 11.94, 11.63, 10.46, 10.23]], "fixed_veh": 22.62, "fixed_ped": 16.43}, "vru": {"v": [0.3, 0.5, 0.6, 0.6667, 0.7, 0.75, 0.9], "ratio": [0.43, 1.0, 1.5, 2.0, 2.33, 3.0, 9.0], "2500_300": {"avg_veh_delay": [14.55, 13.926, 12.828, 14.844, 15.223, 15.434, 14.765], "avg_ped_delay": [12.193, 11.778, 9.942, 9.956, 11.791, 10.676, 9.058], "max_ped": [45.7, 43.5, 30.2, 33.0, 44.9, 47.8, 29.2], "teleports": [0.6, 0.0, 0.0, 0.2, 1.6, 0.0, 0.0], "n": [10, 10, 5, 5, 10, 5, 10]}, "2500_800": {"avg_veh_delay": [19.031, 19.053, 18.562, 27.112, 24.864, 23.72, 23.363], "avg_ped_delay": [15.598, 12.756, 12.478, 16.656, 15.672, 15.176, 13.428], "max_ped": [101.9, 70.5, 66.2, 105.4, 100.2, 106.2, 83.0], "teleports": [1.8, 2.5, 0.2, 7.8, 5.1, 1.6, 2.7], "n": [10, 10, 5, 5, 10, 5, 10]}, "3250_300": {"avg_veh_delay": [31.604, 31.133, 32.434, 31.532, 29.784, 30.87, 29.836], "avg_ped_delay": [13.992, 14.587, 14.298, 12.576, 13.216, 13.13, 9.815], "max_ped": [45.3, 55.8, 59.4, 58.2, 54.6, 68.6, 36.8], "teleports": [0.0, 0.5, 1.2, 0.8, 1.2, 2.4, 0.0], "n": [10, 10, 5, 5, 10, 5, 10]}, "3250_800": {"avg_veh_delay": [40.342, 41.231, 40.094, 42.084, 43.211, 42.584, 40.721], "avg_ped_delay": [15.343, 16.729, 16.956, 18.518, 20.392, 19.45, 17.876], "max_ped": [92.1, 105.7, 107.4, 118.4, 132.2, 117.2, 117.4], "teleports": [0.7, 4.8, 6.2, 5.0, 10.7, 7.4, 10.2], "n": [10, 10, 5, 5, 10, 5, 10]}}};
+const TUM = {blue:"#0065BD", dark:"#005293", mid:"#64A0C8", light:"#98C6EA", grey:"#999999", orange:"#E37222", green:"#A2AD00", ivory:"#DAD7CB"};
+const DEMC = {1000:TUM.light, 1500:TUM.mid, 2500:TUM.blue, 3250:TUM.dark};
+const S = {user:"veh", dem:"2500"};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const LBL = () => S.user === "veh" ? "Average vehicle delay (s)" : "Average pedestrian delay (s)";
+function base(ytitle, xtitle, extra) {
+  const fg = css("--text"), gr = css("--line"), bg = css("--card");
+  return Object.assign({paper_bgcolor: bg, plot_bgcolor: bg, font: {family: "Arial, Liberation Sans, Helvetica, sans-serif", color: fg, size: 11},
+    margin: {l: 56, r: 12, t: 8, b: 46}, showlegend: true,
+    legend: {orientation: "h", x: 0, y: 1.14, font: {size: 10}, bgcolor: "rgba(0,0,0,0)"},
+    xaxis: {title: {text: xtitle}, gridcolor: gr, zerolinecolor: gr}, yaxis: {title: {text: ytitle}, gridcolor: gr, zerolinecolor: gr, rangemode: "tozero"}}, extra || {});
+}
+const L = (name, x, y, color, dash, width, extra) => Object.assign({type: "scatter", mode: "lines+markers", name, x, y,
+  line: {color, dash: dash || "solid", width: width || 2.4}, marker: {size: 5, color}, hovertemplate: name + "<br>%{x}: %{y:.1f}<extra></extra>"}, extra || {});
+const cfg = name => ({responsive: true, displaylogo: false, modeBarButtonsToRemove: ["lasso2d", "select2d"], toImageButtonOptions: {format: "png", scale: 3, filename: "qawp_" + name}});
+const PENTICKS = {type: "log", tickvals: [5, 10, 20, 40, 100], ticktext: ["5", "10", "20", "40", "100"]};
+function tiles() {
+  const k = S.user === "veh" ? "avg_veh_delay" : "avg_ped_delay", sw = D.sweep, r = [];
+  sw.dem.forEach((d, i) => { if (d <= 3000) { const b = Math.min(sw.alternating[k][i], sw.fixedtime[k][i]); r.push(100 * (b - sw.qawp[k][i]) / b); } });
+  document.getElementById("t1").textContent = Math.round(Math.min(...r)) + "–" + Math.round(Math.max(...r)) + " %";
+  document.getElementById("t1s").textContent = (S.user === "veh" ? "vehicle" : "pedestrian") + " delay below capacity, against the better of two fixed-time plans";
+}
+function c1() {
+  const k = S.user === "veh" ? "avg_veh_delay" : "avg_ped_delay", sw = D.sweep, d = +S.dem;
+  const lay = base(LBL(), "Total vehicle demand (veh/h)", {shapes: [
+    {type: "line", x0: 3500, x1: 3500, yref: "paper", y0: 0, y1: 1, line: {color: TUM.grey, dash: "dash", width: 1}},
+    {type: "rect", x0: d - 70, x1: d + 70, yref: "paper", y0: 0, y1: 1, fillcolor: TUM.ivory, opacity: 0.55, line: {width: 0}, layer: "below"}],
+    annotations: [{x: 3500, yref: "paper", y: 1, text: "capacity", showarrow: false, font: {size: 10, color: css("--muted")}, xanchor: "right", yanchor: "top"}]});
+  Plotly.react("c1", [L("QAWP", sw.dem, sw.qawp[k], TUM.blue, "solid", 3), L("Alternating fixed-time", sw.dem, sw.alternating[k], TUM.mid, "dash"),
+                      L("Design programme", sw.dem, sw.fixedtime[k], css("--text"), "dot")], lay, cfg("demand"));
+}
+function c2() {
+  const i = D.thr.dem.indexOf(+S.dem), t = D.thr;
+  Plotly.react("c2", [L("QAWP, CAV perception", t.pen, t[S.user + "_cav"][i], TUM.blue, "solid", 3),
+                      L("QAWP, perfect information", t.pen, t[S.user + "_gt"][i], TUM.grey, "dash"),
+                      L("Fixed-time design programme", t.pen, t[S.user + "_fixed"][i], css("--text"), "dot")],
+    base(LBL() + "", "CAV penetration (%) – " + S.dem + " veh/h", {xaxis: Object.assign({title: {text: "CAV penetration (%) at " + S.dem + " veh/h"}, gridcolor: css("--line")}, PENTICKS)}), cfg("penetration"));
+}
+function c3() {
+  const tr = D.pen.dem.map(d => L(d + " veh/h", D.pen.pen, D.pen[String(d)][S.user + "_pen"], DEMC[d], "solid", String(d) === S.dem ? 3.4 : 1.6,
+    {opacity: String(d) === S.dem ? 1 : 0.45}));
+  Plotly.react("c3", tr, base("Extra " + (S.user === "veh" ? "vehicle" : "pedestrian") + " delay (%)", "CAV penetration (%)", {
+    xaxis: Object.assign({title: {text: "CAV penetration (%)"}, gridcolor: css("--line")}, PENTICKS),
+    shapes: [{type: "rect", xref: "paper", x0: 0, x1: 1, y0: -10, y1: 10, fillcolor: TUM.ivory, opacity: 0.6, line: {width: 0}, layer: "below"}],
+    annotations: [{xref: "paper", x: 1, y: 10, text: "±10 % of perfect information", showarrow: false, xanchor: "right", yanchor: "bottom", font: {size: 10, color: css("--muted")}}]}), cfg("perception_cost"));
+}
+function c4() {
+  const p = D.pen[S.dem];
+  Plotly.react("c4", [L("All road users", D.pen.pen, p.avg_observability_pct, TUM.grey, "dash"), L("Human-driven cars", D.pen.pen, p.avg_observability_pct_HDV, TUM.blue),
+                      L("Pedestrians", D.pen.pen, p.avg_observability_pct_ped, TUM.orange), L("Cyclists", D.pen.pen, p.avg_observability_pct_bike, TUM.green)],
+    base("Visible to the CAV fleet (%)", "", {xaxis: Object.assign({title: {text: "CAV penetration (%) at " + S.dem + " veh/h"}, gridcolor: css("--line")}, PENTICKS),
+      yaxis: {title: {text: "Visible to the CAV fleet (%)"}, range: [0, 100], gridcolor: css("--line")}}), cfg("observability"));
+}
+function c5() {
+  const W = D.w, z = W[S.user], fg = css("--text");
+  const ann = [], shapes = [];
+  z.forEach((row, i) => { const b = row.indexOf(Math.min(...row)); row.forEach((v, j) => ann.push({x: j, y: i, text: v.toFixed(1), showarrow: false,
+    font: {size: 10, color: v < (Math.min(...z.flat()) + Math.max(...z.flat())) / 2 ? "#ffffff" : "#000000"}}));
+    shapes.push({type: "rect", x0: b - 0.5, x1: b + 0.5, y0: i - 0.5, y1: i + 0.5, line: {color: fg, width: 2.2}}); });
+  Plotly.react("c5", [{type: "heatmap", z, x: W.w1.map((_, j) => j), y: W.pen.map((_, i) => i), colorscale: [[0, TUM.dark], [0.5, TUM.mid], [1, TUM.ivory]],
+    showscale: true, colorbar: {thickness: 10, len: 0.85, title: {text: "s", side: "top"}}, hovertemplate: "w₁ = %{customdata[0]}<br>%{customdata[1]} % CAVs<br>%{z:.1f} s<extra></extra>",
+    customdata: W.pen.map(p => W.w1.map(w => [w, p]))}],
+    base("CAV penetration (%)", "w₁ (weight of queue length)", {showlegend: false, annotations: ann, shapes,
+      xaxis: {title: {text: "w₁ (weight of queue length)"}, tickvals: W.w1.map((_, j) => j), ticktext: W.w1.map(String)},
+      yaxis: {title: {text: "CAV penetration (%)"}, tickvals: W.pen.map((_, i) => i), ticktext: W.pen.map(String)}}), cfg("queue_weight"));
+}
+function c6() {
+  const V = D.vru, d = +S.dem <= 2750 ? 2500 : 3250, k = S.user === "veh" ? "avg_veh_delay" : "max_ped";
+  const tr = [300, 800].map(p => L(p + " pedestrians/h", V.ratio, V[d + "_" + p][k], p === 300 ? TUM.mid : TUM.dark, "solid", 2.6));
+  Plotly.react("c6", tr, base(S.user === "veh" ? "Average vehicle delay (s)" : "Maximum pedestrian delay (s)", "", {
+    xaxis: {title: {text: "Weight of one VRU relative to one car (" + d + " veh/h)"}, type: "log", tickvals: [0.43, 1, 1.5, 2, 3, 9], ticktext: ["0.43×", "1×", "1.5×", "2×", "3×", "9×"], gridcolor: css("--line")},
+    shapes: [{type: "rect", x0: 1.3, x1: 1.75, yref: "paper", y0: 0, y1: 1, fillcolor: TUM.green, opacity: 0.18, line: {width: 0}, layer: "below"},
+             {type: "line", x0: 1, x1: 1, yref: "paper", y0: 0, y1: 1, line: {color: TUM.grey, dash: "dash", width: 1}}]}), cfg("vru_weight"));
+}
+function draw() { tiles(); c1(); c2(); c3(); c4(); c5(); c6(); }
+function seg(id, key) { document.querySelectorAll("#" + id + " button").forEach(b => b.onclick = () => { S[key] = b.dataset.v;
+  document.querySelectorAll("#" + id + " button").forEach(x => x.setAttribute("aria-pressed", x === b)); draw(); }); }
+if (window.Plotly) {
+  seg("sUser", "user"); seg("sDem", "dem"); draw();
+  const mq = window.matchMedia("(prefers-color-scheme: dark)"); if (mq.addEventListener) mq.addEventListener("change", draw);
+  new MutationObserver(draw).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+} else { document.querySelectorAll(".plot").forEach(p => p.innerHTML = '<p class="err">The chart library could not load. Please check the internet connection and reload.</p>'); }
+</script>
 </body>
 </html>
