@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>try{var t=localStorage.getItem("qawp-theme");document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>QAWP – results dashboard</title>
 <style>
@@ -41,11 +43,12 @@ h2.more{font-size:1.1rem;margin:30px 0 8px}
 .err{padding:16px;color:var(--muted)}
 @media (max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}}
 @media (max-width:520px){.kpis{grid-template-columns:1fr}.kv{font-size:1.6rem}}
+.themebtn{margin-left:auto;font:inherit;font-size:1rem;line-height:1;padding:5px 9px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--text);cursor:pointer}.themebtn:hover{border-color:var(--accent)}
 </style>
 </head>
 <body>
 <main>
-<nav class="top"><a class="home" href="index.html">QAWP results</a><a href="penetration-3d.html">Penetration &amp; demand (3D)</a><a href="demand-sweep.html">Demand sweep</a><a href="timing.html">Signal timing</a><a href="weights-3d.html">Queue weight (3D)</a><a href="tradeoff.html">Efficiency vs fairness</a><a href="vru-weight.html">VRU weighting</a><a href="observability.html">Observability</a><a href="perception-cost.html">Cost of perception</a></nav>
+<nav class="top"><a class="home" href="index.html">QAWP results</a><a href="penetration-3d.html">Penetration &amp; demand (3D)</a><a href="demand-sweep.html">Demand sweep</a><a href="timing.html">Signal timing</a><a href="weights-3d.html">Queue weight (3D)</a><a href="tradeoff.html">Efficiency vs fairness</a><a href="vru-weight.html">VRU weighting</a><a href="observability.html">Observability</a><a href="perception-cost.html">Cost of perception</a><button class="themebtn" id="themeBtn" type="button" aria-label="Switch between light and dark mode" title="Light / dark mode">🌙</button></nav>
 <h1>Queue-aware signal control under mixed traffic: results at a glance</h1>
 <p class="sub">Master’s thesis “Queue-Aware Delay Balancing at Automated Intersections under Mixed Traffic”, Technical University of Munich, 2026. All charts respond to the controls below; each links to a detailed page.</p>
 <div class="controls">
@@ -144,5 +147,6 @@ if (window.Plotly) {
   new MutationObserver(draw).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
 } else { document.querySelectorAll(".plot").forEach(p => p.innerHTML = '<p class="err">The chart library could not load. Please check the internet connection and reload.</p>'); }
 </script>
+<script>(function(){var b=document.getElementById("themeBtn"),r=document.documentElement;function icon(){var d=r.getAttribute("data-theme")==="dark";b.textContent=d?"☀️":"🌙";b.title=d?"Switch to light mode":"Switch to dark mode";}icon();b.onclick=function(){var d=r.getAttribute("data-theme")==="dark"?"light":"dark";r.setAttribute("data-theme",d);try{localStorage.setItem("qawp-theme",d);}catch(e){}icon();};})();</script>
 </body>
 </html>

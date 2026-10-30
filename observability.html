@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>try{var t=localStorage.getItem("qawp-theme");document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>What the CAV fleet can see, and how accurate the estimate is</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,11 +41,12 @@ h2{font-size:1.02rem;font-weight:600;margin:20px 0 8px}
 .card{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 16px 14px;color:var(--text);text-decoration:none}
 .card:hover{border-color:var(--accent)} .card h3{margin:2px 0 6px;font-size:1rem;line-height:1.3} .card p{margin:0;color:var(--muted);font-size:.88rem}
 .err{padding:16px;color:var(--muted)}
+.themebtn{margin-left:auto;font:inherit;font-size:1rem;line-height:1;padding:5px 9px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--text);cursor:pointer}.themebtn:hover{border-color:var(--accent)}
 </style>
 </head>
 <body>
 <main>
-<nav class="top"><a class="home" href="index.html">QAWP results</a><a href="penetration-3d.html">Penetration &amp; demand (3D)</a><a href="demand-sweep.html">Demand sweep</a><a href="timing.html">Signal timing</a><a href="weights-3d.html">Queue weight (3D)</a><a href="tradeoff.html">Efficiency vs fairness</a><a href="vru-weight.html">VRU weighting</a><a href="observability.html" class="cur">Observability</a><a href="perception-cost.html">Cost of perception</a></nav>
+<nav class="top"><a class="home" href="index.html">QAWP results</a><a href="penetration-3d.html">Penetration &amp; demand (3D)</a><a href="demand-sweep.html">Demand sweep</a><a href="timing.html">Signal timing</a><a href="weights-3d.html">Queue weight (3D)</a><a href="tradeoff.html">Efficiency vs fairness</a><a href="vru-weight.html">VRU weighting</a><a href="observability.html" class="cur">Observability</a><a href="perception-cost.html">Cost of perception</a><button class="themebtn" id="themeBtn" type="button" aria-label="Switch between light and dark mode" title="Light / dark mode">🌙</button></nav>
 <span class="tag">RQ3</span>
 <h1>What the CAV fleet can see, and how accurate the estimate is</h1>
 <p class="sub">Observability by road-user type and the error of the estimated queue and waiting time, 5–100 % CAVs.</p>
@@ -112,5 +115,6 @@ if (window.Plotly) {
   new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 } else { PAGE.plots.forEach(p => $(p.id).innerHTML = '<p class="err">The chart library could not load. Please check the internet connection and reload.</p>'); }
 </script>
+<script>(function(){var b=document.getElementById("themeBtn"),r=document.documentElement;function icon(){var d=r.getAttribute("data-theme")==="dark";b.textContent=d?"☀️":"🌙";b.title=d?"Switch to light mode":"Switch to dark mode";}icon();b.onclick=function(){var d=r.getAttribute("data-theme")==="dark"?"light":"dark";r.setAttribute("data-theme",d);try{localStorage.setItem("qawp-theme",d);}catch(e){}icon();};})();</script>
 </body>
 </html>
