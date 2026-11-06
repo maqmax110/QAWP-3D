@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  demand.rou.xml  (network 2)
+
+  Each approach is a 200 m upstream edge followed by a 20 m turn-pocket edge,
+  so every route lists both before the exit edge, e.g.  E0 E0.42 E4.
+
+  Movement shares match network 1 so the two networks are comparable:
+      straight = 1.0     right = 0.6     left = 0.3
+  (the protected-left phases in network 2 exist precisely to serve the left
+   share better; holding the share fixed isolates that design benefit)
+
+  HDV/CAV numbers below are only defaults; the controllers rewrite them from
+  total_veh / cav_pct at run time.  Pedestrian numbers are rewritten from
+  ped_vol.  Do not use a double hyphen inside XML comments.
+
+  Cyclists: straight and free right only, no left turns (two-stage left
+  convention), matching the cycle-lane connections in the network.
+
+  Approach -> exits:
+      West  (E0  E0.42 ) : right E3   straight E4   left -E2
+      North (E2  E2.42 ) : right -E0  straight E3   left E4
+      South (-E3 -E3.41) : right E4   straight -E2  left -E0
+      East  (-E4 -E4.41) : right -E2  straight -E0  left E3
+-->
+
+<routes>
+
+    <vType id="HDV" vClass="passenger" accel="2.6" decel="4.5" sigma="0.5" maxSpeed="13.89"/>
+    <vType id="CAV" vClass="passenger" accel="3.0" decel="5.0" sigma="0.0" maxSpeed="13.89" carFollowModel="IDM"/>
+    <vType id="bike_profile" vClass="bicycle" accel="1.2" decel="3.0" maxSpeed="5.56"/>
+
+    <routeDistribution id="all_directions_dist">
+        <!-- from West -->
+        <route edges="E0 E0.42 E4"     weight="1.0"/>
+        <route edges="E0 E0.42 E3"     weight="0.6"/>
+        <route edges="E0 E0.42 -E2"    weight="0.3"/>
+        <!-- from North -->
+        <route edges="E2 E2.42 E3"     weight="1.0"/>
+        <route edges="E2 E2.42 -E0"    weight="0.6"/>
+        <route edges="E2 E2.42 E4"     weight="0.3"/>
+        <!-- from South -->
+        <route edges="-E3 -E3.41 -E2"  weight="1.0"/>
+        <route edges="-E3 -E3.41 E4"   weight="0.6"/>
+        <route edges="-E3 -E3.41 -E0"  weight="0.3"/>
+        <!-- from East -->
+        <route edges="-E4 -E4.41 -E0"  weight="1.0"/>
+        <route edges="-E4 -E4.41 -E2"  weight="0.6"/>
+        <route edges="-E4 -E4.41 E3"   weight="0.3"/>
+    </routeDistribution>
+
+    <!-- cyclist routes: straight and right only -->
+    <route id="bW_s" edges="E0 E0.42 E4"/>
+    <route id="bW_r" edges="E0 E0.42 E3"/>
+    <route id="bN_s" edges="E2 E2.42 E3"/>
+    <route id="bN_r" edges="E2 E2.42 -E0"/>
+    <route id="bS_s" edges="-E3 -E3.41 -E2"/>
+    <route id="bS_r" edges="-E3 -E3.41 E4"/>
+    <route id="bE_s" edges="-E4 -E4.41 -E0"/>
+    <route id="bE_r" edges="-E4 -E4.41 -E2"/>
+
+    <!-- vehicle flows (rewritten at run time) -->
+    <flow id="hdv_random_flow" type="HDV" route="all_directions_dist" begin="0" end="3600" number="1500" departLane="best"/>
+    <flow id="cav_random_flow" type="CAV" route="all_directions_dist" begin="0" end="3600" number="1500" departLane="best"/>
+
+    <!-- cyclist flows: 300 total, matching network 1 -->
+    <flow id="bike_WE" type="bike_profile" route="bW_s" begin="0" end="3600" number="50"/>
+    <flow id="bike_WS" type="bike_profile" route="bW_r" begin="0" end="3600" number="25"/>
+    <flow id="bike_NS" type="bike_profile" route="bN_s" begin="0" end="3600" number="50"/>
+    <flow id="bike_NW" type="bike_profile" route="bN_r" begin="0" end="3600" number="25"/>
+    <flow id="bike_SN" type="bike_profile" route="bS_s" begin="0" end="3600" number="50"/>
+    <flow id="bike_SE" type="bike_profile" route="bS_r" begin="0" end="3600" number="25"/>
+    <flow id="bike_EW" type="bike_profile" route="bE_s" begin="0" end="3600" number="50"/>
+    <flow id="bike_EN" type="bike_profile" route="bE_r" begin="0" end="3600" number="25"/>
+
+    <!-- pedestrian flows: 300 total by default (rewritten by ped_vol) -->
+    <personFlow id="peds_WE" begin="0" end="3600" number="75" departPos="random">
+        <walk edges="E0 E0.42 E4"/>
+    </personFlow>
+    <personFlow id="peds_EW" begin="0" end="3600" number="75" departPos="random">
+        <walk edges="-E4 -E4.41 -E0"/>
+    </personFlow>
+    <personFlow id="peds_NS" begin="0" end="3600" number="75" departPos="random">
+        <walk edges="E2 E2.42 E3"/>
+    </personFlow>
+    <personFlow id="peds_SN" begin="0" end="3600" number="75" departPos="random">
+        <walk edges="-E3 -E3.41 -E2"/>
+    </personFlow>
+
+</routes>
